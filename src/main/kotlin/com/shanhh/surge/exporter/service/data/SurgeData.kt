@@ -1,5 +1,7 @@
 package com.shanhh.surge.exporter.service.data
 
+import com.fasterxml.jackson.annotation.JsonProperty
+
 /**
  * @author honghao.shan
  * @since
@@ -58,4 +60,20 @@ data class BytesStat(
     val m15: Long,
     val m60: Long,
     val today: Long,
+)
+
+data class TrafficResp(
+    val connector: Map<String, Traffic>,
+    val startTime: Double,
+    @JsonProperty("interface") val interfaces: Map<String, Traffic>
+)
+
+data class Traffic(
+    @JsonProperty("in") val inBytes: Long,
+    val inMaxSpeed: Long,
+    val inCurrentSpeed: Long,
+    @JsonProperty("out") val outBytes: Long,
+    val outMaxSpeed: Long,
+    val outCurrentSpeed: Long,
+    val lineHash: String?
 )

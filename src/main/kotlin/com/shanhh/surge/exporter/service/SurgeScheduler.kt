@@ -19,4 +19,9 @@ class SurgeScheduler(val surgeService: SurgeService) {
     fun fetchDevices() {
         surgeService.registerDevices()
     }
+
+    @Scheduled(fixedRate = 1000)
+    fun fetchTraffic() {
+        surgeService.registerTraffic()
+    }
 }

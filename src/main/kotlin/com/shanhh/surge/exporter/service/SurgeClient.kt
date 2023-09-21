@@ -33,6 +33,11 @@ class SurgeClient(val exporterProperties: ExporterProperties, val objectMapper: 
         return objectMapper.readValue(body, DeviceResp::class.java).devices
     }
 
+    fun getTraffic(): TrafficResp {
+        val body = sendGet("/v1/traffic")
+        return objectMapper.readValue(body, TrafficResp::class.java)
+    }
+
     fun sendGet(uri: String): String {
         val request = HttpRequest.newBuilder()
             .uri(URI.create("${exporterProperties.surge.url}${uri}"))
