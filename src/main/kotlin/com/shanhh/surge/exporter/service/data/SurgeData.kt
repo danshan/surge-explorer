@@ -4,10 +4,58 @@ package com.shanhh.surge.exporter.service.data
  * @author honghao.shan
  * @since
  */
+class PolicyGroupsResp : HashMap<String, List<Policy>>()
+
+class BenchmarkResultsResp : HashMap<String, BenchmarkResult>()
+
 data class Policy(
     val isGroup: Boolean,
     val name: String,
     val typeDescription: String,
     val lineHash: String,
     val enabled: Boolean
+)
+
+data class BenchmarkResult(
+    val lastTestErrorMessage: String?,
+    val lastTestScoreInMS: Int,
+    val testing: Int,
+)
+
+data class DeviceResp(val devices: List<Device>)
+
+data class Device(
+    val dnsName: String?,
+    val activeConnections: Long,
+    val currentInSpeed: Long,
+    val currentOutSpeed: Long,
+    val currentSpeed: Long,
+    val dhcpLastIP: String?,
+    val displayIPAddress: String,
+    val dhcpGatewayEnabled: Boolean,
+    val dhcpIcon: String?,
+    val dhcpLastSeenTimestamp: Long,
+    val dhcpWaitingToReconnect: Boolean,
+    val physicalAddress: String?,
+    val identifier: String,
+    val inBytes: Long,
+    val inBytesStat: BytesStat?,
+    val outBytes: Long,
+    val outBytesStat: BytesStat?,
+    val name: String,
+    val sourceIp: String?,
+    val topHostBySingleConnectionTraffic: String?,
+    val totalBytes: Long,
+    val totalConnections: Long,
+    val vendor: String?
+)
+
+data class BytesStat(
+    val h6: Long,
+    val h12: Long,
+    val h24: Long,
+    val m5: Long,
+    val m15: Long,
+    val m60: Long,
+    val today: Long,
 )

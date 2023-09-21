@@ -1,4 +1,4 @@
-package com.shanhh.surge.surgeexporter
+package com.shanhh.surge.exporter
 
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication

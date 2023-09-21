@@ -1,6 +1,5 @@
-package com.shanhh.surge.exporter.service.data
+package com.shanhh.surge.exporter.service
 
-import com.shanhh.surge.exporter.service.SurgeService
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 
@@ -14,5 +13,10 @@ class SurgeScheduler(val surgeService: SurgeService) {
     @Scheduled(fixedRate = 5000)
     fun fetchBenchmarks() {
         surgeService.registerBenchmarkResults()
+    }
+
+    @Scheduled(fixedRate = 1000)
+    fun fetchDevices() {
+        surgeService.registerDevices()
     }
 }
