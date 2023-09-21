@@ -33,7 +33,7 @@ data class Device(
     val currentOutSpeed: Long,
     val currentSpeed: Long,
     val dhcpLastIP: String?,
-    val displayIPAddress: String,
+    val displayIPAddress: String?,
     val dhcpGatewayEnabled: Boolean,
     val dhcpIcon: String?,
     val dhcpLastSeenTimestamp: Long,
