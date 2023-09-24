@@ -10,6 +10,10 @@ class PolicyGroupsResp : HashMap<String, List<Policy>>()
 
 class BenchmarkResultsResp : HashMap<String, BenchmarkResult>()
 
+class GroupTestResultsResp: HashMap<String, List<String>>()
+
+class GroupSelectedResp: HashMap<String, String>()
+
 data class Policy(
     val isGroup: Boolean,
     val name: String,

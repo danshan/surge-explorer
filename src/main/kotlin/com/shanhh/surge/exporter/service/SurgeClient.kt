@@ -1,6 +1,7 @@
 package com.shanhh.surge.exporter.service
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.google.common.net.UrlEscapers
 import com.shanhh.surge.exporter.config.ExporterProperties
 import com.shanhh.surge.exporter.service.data.*
 import org.springframework.stereotype.Service
@@ -36,6 +37,16 @@ class SurgeClient(val exporterProperties: ExporterProperties, val objectMapper: 
     fun getTraffic(): TrafficResp {
         val body = sendGet("/v1/traffic")
         return objectMapper.readValue(body, TrafficResp::class.java)
+    }
+
+    fun findGroupTestResults(): GroupTestResultsResp {
+        val body = sendGet("/v1/policy_groups/test_results")
+        return objectMapper.readValue(body, GroupTestResultsResp::class.java)
+    }
+
+    fun getGroupSelected(groupName: String): Map<String, String> {
+        val body = sendGet("/v1/policy_groups/select?group_name=${UrlEscapers.urlFragmentEscaper().escape(groupName)}")
+        return objectMapper.readValue(body, GroupSelectedResp::class.java)
     }
 
     fun sendGet(uri: String): String {

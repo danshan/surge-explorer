@@ -1,10 +1,14 @@
 package com.shanhh.surge.exporter.service
 
+import com.google.common.cache.CacheBuilder
+import com.google.common.cache.CacheLoader
+import com.google.common.collect.Sets
 import com.google.common.util.concurrent.AtomicDouble
 import com.shanhh.surge.exporter.service.data.*
 import io.micrometer.core.instrument.MeterRegistry
 import io.micrometer.core.instrument.Tags
 import org.springframework.stereotype.Service
+import java.util.concurrent.TimeUnit
 
 
 /**
@@ -16,7 +20,21 @@ class SurgeService(val surgeClient: SurgeClient, final val meterRegistry: MeterR
 
     companion object {
         val GAUGE_CACHE = HashMap<String, AtomicDouble>()
+        val FLAGS = Sets.newHashSet(
+            "\uD83C\uDDEF\uD83C\uDDF5",
+            "\uD83C\uDDED\uD83C\uDDF0",
+            "\uD83C\uDFF3\uFE0F",
+            "\uD83C\uDDE8\uD83C\uDDF3",
+            "\uD83C\uDDFA\uD83C\uDDF8"
+        )
     }
+
+    // guava load cache for group selected
+    val groupSelectedCache = CacheBuilder.newBuilder()
+        .expireAfterWrite(1, TimeUnit.MINUTES)
+        .build<String, String>(
+            CacheLoader.from { key: String -> getGroupSelected(key) }
+        )
 
     fun registerBenchmarkResults() {
         val benchmarkResults = findBenchmarkResults()
@@ -27,14 +45,11 @@ class SurgeService(val surgeClient: SurgeClient, final val meterRegistry: MeterR
                 val benchmark = benchmarkResults[policy.lineHash]
                 if (benchmark != null) {
                     val tags = Tags.of(
-                        "policy_group",
-                        group,
-                        "policy_name",
-                        policy.name,
-                        "policy_hash",
-                        policy.lineHash,
-                        "sp",
-                        getSP(policy.name)
+                        "policy_group", group,
+                        "policy_name", policy.name,
+                        "policy_hash", policy.lineHash,
+                        "is_group", policy.isGroup.toString(),
+                        "sp", getSP(policy.name)
                     )
                     handleGauge("surge_benchmark", tags, benchmark.lastTestScoreInMS.toDouble())
                 }
@@ -46,7 +61,6 @@ class SurgeService(val surgeClient: SurgeClient, final val meterRegistry: MeterR
         val devices = findClients()
 
         for (device in devices) {
-            val deviceKey = "${device.identifier}-${device.sourceIp}-${device.physicalAddress}-${device.name}"
             val tags = Tags.of(
                 "identifier", device.identifier,
                 "source_ip", device.sourceIp ?: "",
@@ -85,6 +99,54 @@ class SurgeService(val surgeClient: SurgeClient, final val meterRegistry: MeterR
         }
     }
 
+    fun registerGroupBenchmarks() {
+        val groupTestResults = getGroupTestResults()
+        val benchmarkResults = findBenchmarkResults()
+        val groups = findPolicyGroups()
+
+        for ((groupName, policies) in groups) {
+            if (FLAGS.map { groupName.contains(it) }.contains(true)) {
+                continue
+            }
+            val finalPolicy = getFinalPolicy(groupName, groupTestResults, groups) ?: continue
+            // find hash for final policy
+            val finalPolicyHash = findHashForPolicy(finalPolicy, groups)
+            val benchmark = benchmarkResults[finalPolicyHash] ?: continue
+            val tags = Tags.of(
+                "policy_group", groupName,
+                "policy_name", finalPolicy,
+                "policy_hash", finalPolicyHash,
+            )
+            handleGauge("surge_group_benchmark_in_bytes", tags, benchmark.lastTestScoreInMS.toDouble())
+        }
+    }
+
+    fun findHashForPolicy(policyName: String, policyGroups: Map<String, List<Policy>>): String? {
+        for ((group, policies) in policyGroups) {
+            val policy = policies.find { it.name == policyName }
+            if (policy != null) {
+                return policy.lineHash
+            }
+        }
+        return null
+    }
+
+    fun getFinalPolicy(
+        groupName: String,
+        groupTestResults: Map<String, String>,
+        policyGroups: Map<String, List<Policy>>
+    ): String? {
+        if (groupTestResults.containsKey(groupName)) {
+            return groupTestResults[groupName]
+        }
+
+        val selected = groupSelectedCache.get(groupName) ?: return null
+        if (policyGroups.containsKey(selected)) {
+            return getFinalPolicy(selected, groupTestResults, policyGroups)
+        }
+        return selected
+    }
+
     fun findBenchmarkResults(): Map<String, BenchmarkResult> {
         val results = surgeClient.findBenchmarkResults()
         return results
@@ -105,10 +167,20 @@ class SurgeService(val surgeClient: SurgeClient, final val meterRegistry: MeterR
         return results
     }
 
+    fun getGroupTestResults(): Map<String, String> {
+        return surgeClient.findGroupTestResults()
+            .filter { !it.key.endsWith("-lb") }
+            .filter { it.value.isNotEmpty() }
+            .mapValues { it.value[0] }
+    }
+
+    fun getGroupSelected(groupName: String): String? {
+        return surgeClient.getGroupSelected(groupName)["policy"]
+    }
+
     fun getSP(policyName: String): String {
         return if (policyName.startsWith('[')) policyName.substring(1, policyName.indexOf(']')) else policyName
     }
-
 
     fun handleGauge(name: String, tags: Tags, value: Double) {
         val gaugeKey = gaugeKey(name, tags)

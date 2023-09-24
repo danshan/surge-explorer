@@ -24,4 +24,9 @@ class SurgeScheduler(val surgeService: SurgeService) {
     fun fetchTraffic() {
         surgeService.registerTraffic()
     }
+
+    @Scheduled(fixedRate = 5000)
+    fun fetchGroupBenchmarks() {
+        surgeService.registerGroupBenchmarks()
+    }
 }
