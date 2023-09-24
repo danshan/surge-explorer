@@ -117,7 +117,7 @@ class SurgeService(val surgeClient: SurgeClient, final val meterRegistry: MeterR
                 "policy_name", finalPolicy,
                 "policy_hash", finalPolicyHash,
             )
-            handleGauge("surge_group_benchmark_in_bytes", tags, benchmark.lastTestScoreInMS.toDouble())
+            handleGauge("surge_group_benchmark", tags, benchmark.lastTestScoreInMS.toDouble())
         }
     }
 
