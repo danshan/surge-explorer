@@ -114,8 +114,8 @@ class SurgeService(val surgeClient: SurgeClient, final val meterRegistry: MeterR
             val benchmark = benchmarkResults[finalPolicyHash] ?: continue
             val tags = Tags.of(
                 "policy_group", groupName,
-                "policy_name", finalPolicy,
-                "policy_hash", finalPolicyHash,
+//                "policy_name", finalPolicy,
+//                "policy_hash", finalPolicyHash,
             )
             handleGauge("surge_group_benchmark", tags, benchmark.lastTestScoreInMS.toDouble())
         }
