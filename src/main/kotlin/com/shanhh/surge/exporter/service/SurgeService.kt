@@ -1,6 +1,7 @@
 package com.shanhh.surge.exporter.service
 
 import com.google.common.util.concurrent.AtomicDouble
+import com.shanhh.surge.exporter.config.ExporterProperties
 import com.shanhh.surge.exporter.service.data.*
 import io.micrometer.core.instrument.MeterRegistry
 import io.micrometer.core.instrument.Tags
@@ -12,7 +13,11 @@ import org.springframework.stereotype.Service
  * @since
  */
 @Service
-class SurgeService(val surgeClient: SurgeClient, final val meterRegistry: MeterRegistry) {
+class SurgeService(
+    final val surgeClient: SurgeClient,
+    final val meterRegistry: MeterRegistry,
+    final val exporterProperties: ExporterProperties
+) {
 
     companion object {
         val GAUGE_CACHE = HashMap<String, AtomicDouble>()
@@ -83,6 +88,29 @@ class SurgeService(val surgeClient: SurgeClient, final val meterRegistry: MeterR
             handleGauge("${namePrefix}_out_current_speed", tags, traffic.outCurrentSpeed.toDouble())
             handleGauge("${namePrefix}_out_max_speed", tags, traffic.outMaxSpeed.toDouble())
         }
+    }
+
+    fun registerSubscriptions() {
+        for ((sp, subscription) in exporterProperties.subscriptions) {
+            val subscriptionInfo = surgeClient.getSpSubscriptionInfo(subscription.url)
+            if (subscriptionInfo.isPresent) {
+                val tags = Tags.of(
+                    "sp", sp,
+                )
+                val subInfo = buildSubInfo(subscriptionInfo.get())
+                handleGauge("surge_subscription_upload", tags, subInfo.upload.toDouble())
+                handleGauge("surge_subscription_download", tags, subInfo.download.toDouble())
+                handleGauge("surge_subscription_total", tags, subInfo.total.toDouble())
+            }
+        }
+    }
+
+    private fun buildSubInfo(info: String): SubInfo {
+        return SubInfo(
+            upload = Regex("upload=(\\d+)").find(info)?.groupValues?.get(1)?.toLong() ?: 0L,
+            download = Regex("download=(\\d+)").find(info)?.groupValues?.get(1)?.toLong() ?: 0L,
+            total = Regex("total=(\\d+)").find(info)?.groupValues?.get(1)?.toLong() ?: 0L,
+        )
     }
 
     fun findBenchmarkResults(): Map<String, BenchmarkResult> {

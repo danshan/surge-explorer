@@ -1,6 +1,6 @@
 package com.shanhh.surge.exporter.controller
 
-import com.shanhh.surge.exporter.service.SurgeService
+import com.shanhh.surge.exporter.service.SurgeClient
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RestController
 
@@ -9,11 +9,11 @@ import org.springframework.web.bind.annotation.RestController
  * @since
  */
 @RestController
-class PrometheusController(val surgeService: SurgeService) {
+class PrometheusController(val surgeClient: SurgeClient) {
 
-    @GetMapping("/metrics")
-    fun metrics() {
-        return surgeService.registerBenchmarkResults()
+    @GetMapping("/subscribe")
+    fun metrics(): String {
+        return surgeClient.getSpSubscriptionInfo("https://arkdy.com/link/HYcsnTt5xrQ73tVx?clash=1").orElse("UNKNOWN")
     }
 
 }

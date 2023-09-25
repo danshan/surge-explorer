@@ -12,10 +12,15 @@ import org.springframework.context.annotation.Configuration
 class ExporterProperties {
 
     val surge = Surge()
+    val subscriptions = HashMap<String, Subscription>()
 
     data class Surge(
         var url: String = "",
         var password: String = "",
+    )
+
+    data class Subscription(
+        val url: String
     )
 
 }

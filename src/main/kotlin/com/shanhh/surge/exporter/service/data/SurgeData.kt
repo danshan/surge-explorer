@@ -77,3 +77,5 @@ data class Traffic(
     val outCurrentSpeed: Long,
     val lineHash: String?
 )
+
+data class SubInfo(val upload: Long, val download: Long, val total: Long)

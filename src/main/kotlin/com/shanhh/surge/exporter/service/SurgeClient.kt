@@ -3,11 +3,13 @@ package com.shanhh.surge.exporter.service
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.shanhh.surge.exporter.config.ExporterProperties
 import com.shanhh.surge.exporter.service.data.*
+import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
+import java.util.*
 
 /**
  * @author honghao.shan
@@ -36,6 +38,17 @@ class SurgeClient(val exporterProperties: ExporterProperties, val objectMapper: 
     fun getTraffic(): TrafficResp {
         val body = sendGet("/v1/traffic")
         return objectMapper.readValue(body, TrafficResp::class.java)
+    }
+
+    fun getSpSubscriptionInfo(url: String): Optional<String> {
+        val request = HttpRequest.newBuilder()
+            .uri(URI.create(url))
+            .build()
+        val response = client.send(request, HttpResponse.BodyHandlers.ofString())
+        if (response.statusCode() == HttpStatus.MOVED_PERMANENTLY.value() || response.statusCode() == HttpStatus.FOUND.value()) {
+            return getSpSubscriptionInfo(response.headers().firstValue("Location").get())
+        }
+        return response.headers().firstValue("Subscription-Userinfo")
     }
 
     fun sendGet(uri: String): String {
